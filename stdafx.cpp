@@ -1,5 +1,5 @@
 // stdafx.cpp : source file that includes just the standard includes
-// final_connect4.pch will be the pre-compiled header
+// first_connect4.pch will be the pre-compiled header
 // stdafx.obj will contain the pre-compiled type information
 
 #include "stdafx.h"

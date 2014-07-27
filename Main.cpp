@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Main.h"
-#include "Main.h"
+#include "Sprite.h"
 
 
 CMain::CMain(int passed_ScreenWidth,int passed_ScreenHight)
@@ -35,6 +35,38 @@ CMain::~CMain()
 	delete no_winner;
 }
 
+
+bool CMain::check(int a, int b)
+{
+	if (place[a][b].in == 1)
+	{
+		int vertical = 1;//(|)
+		int horizontal = 1;//(-)
+		int diagonal1 = 1;//(\)
+		int diagonal2 = 1;//(/)
+		char player = place[a][b].player;
+		int i;//vertical
+		int j;//horizontal
+		//check for vertical(|)
+		for (i = a + 1; place[i][b].player == player && i < 6; i++, vertical++);//Check down
+		for (i = a - 1; place[i][b].player == player && i >= 0; i--, vertical++);//Check up
+		if (vertical >= 4)return true;
+		//check for horizontal(-)
+		for (j = b - 1; place[a][j].player == player && j >= 0; j--, horizontal++);//Check left
+		for (j = b + 1; place[a][j].player == player && j < 7; j++, horizontal++);//Check right
+		if (horizontal >= 4) return true;
+		//check for diagonal 1 (\)
+		for (i = a - 1, j = b - 1; place[i][j].player == player && i >= 0 && j >= 0; diagonal1++, i--, j--);//up and left
+		for (i = a + 1, j = b + 1; place[i][j].player == player && i < 6 && j < 7; diagonal1++, i++, j++);//down and right
+		if (diagonal1 >= 4) return true;
+		//check for diagonal 2(/)
+		for (i = a - 1, j = b + 1; place[i][j].player == player && i >= 0 && j < 7; diagonal2++, i--, j++);//up and right
+		for (i = a + 1, j = b - 1; place[i][j].player == player && i < 6 && j >= 0; diagonal2++, i++, j--);//up and left
+		if (diagonal2 >= 4) return true;
+		return false;
+	}
+}
+
 int CMain::drop(int col)
 {
 	int raw;
@@ -61,6 +93,15 @@ void CMain::GameLoop(void)
 		csdl_setup->begain();
 		SDL_GetMouseState(&MouseX, &MouseY);
 		board->draw();
+		for (int j = 0; j < Rect1.size(); j++)
+		{
+			SDL_RenderCopy(csdl_setup->GetRenderer(),red_coin->Get_image() , NULL, &Rect1[j]);//save red coin in the vector 1
+
+		}
+		for (int j = 0; j < Rect2.size(); j++)
+		{
+			SDL_RenderCopy(csdl_setup->GetRenderer(), yellow_coin->Get_image(), NULL, &Rect2[j]);//save the yellow coin in the vector two
+		}
 		if (number_of_coin % 2 == 0)
 		{
 			red_coin->draw();//draw the red coin if the number of coin is even number
@@ -93,9 +134,16 @@ void CMain::GameLoop(void)
 			{
 			case SDLK_a:
 				if (number_of_coin % 2 == 0)//RED COIN "even number" and don't move out the board
-					red_coin->SetX(red_coin->GetX() - 88);//MOVE THE RED COIN -100 WHEN PRESS <--
+					red_coin->SetX(red_coin->GetX() - 100);//MOVE THE RED COIN -100 WHEN PRESS <--
 				if (number_of_coin % 2 != 0)//YELLOW COIN "odd number" and don't move out the board
-					yellow_coin->SetX(yellow_coin->GetX() - 88);//MOVE THE YELLOW COIN -100 WHEN PRESS <--
+					yellow_coin->SetX(yellow_coin->GetX() - 100);//MOVE THE YELLOW COIN -100 WHEN PRESS <--
+
+				break;
+			case SDLK_d:
+				if (number_of_coin % 2 == 0)//RED COIN "even number" and don't move out the board
+					red_coin->SetX(red_coin->GetX() + 100);//MOVE THE RED COIN -100 WHEN PRESS <--
+				if (number_of_coin % 2 != 0)//YELLOW COIN "odd number" and don't move out the board
+					yellow_coin->SetX(yellow_coin->GetX() + 100);//MOVE THE YELLOW COIN -100 WHEN PRESS <--
 
 				break;
 			case SDLK_SPACE:
@@ -106,9 +154,11 @@ void CMain::GameLoop(void)
 					if (ROW != 1)
 					{
 						place[ROW - 2][(red_coin->GetX() - 8) / 100].player = 'A';
-						red_coin->SetY(red_coin->GetY() + (ROW * 68));
-						//Rect1.push_back();//push the coin in the vector
+						red_coin->SetY(red_coin->GetY() + (66 * ROW));
+						red_coin->SetY(red_coin->GetY() - ((6 - ROW) * 13));
+						Rect1.push_back(red_coin->GetRect());//push the coin in the vector
 						//draw the yellow coin after the red coin drop
+						yellow_coin = new CSprite(csdl_setup->GetRenderer(), "player 2.png", 8, 10, 96, 86);
 						yellow_coin->draw();
 
 					}
@@ -124,10 +174,12 @@ void CMain::GameLoop(void)
 					int ROW = drop(COL);
 					if (ROW != 1)
 					{
-						place[ROW - 2][(yellow_coin->GetX() - 8) / 100].player = 'A';
-						yellow_coin->SetY(yellow_coin->GetY() + (ROW * 68));
-						//Rect1.push_back();//push the coin in the vector
+						place[ROW - 2][(yellow_coin->GetX() - 8) / 100].player = 'B';
+						yellow_coin->SetY(yellow_coin->GetY() + (66 * ROW));
+						yellow_coin->SetY(yellow_coin->GetY() - ((6 - ROW) * 13));
+						Rect2.push_back(yellow_coin->GetRect());//push the coin in the vector
 						//draw the yellow coin after the red coin drop
+						red_coin = new CSprite(csdl_setup->GetRenderer(), "player 1.png", 8, 10, 96, 86);
 						red_coin->draw();
 
 					}
@@ -138,13 +190,7 @@ void CMain::GameLoop(void)
 				}
 				number_of_coin++;
 				break;
-			case SDLK_d:
-				if (number_of_coin % 2 == 0)//RED COIN "even number" and don't move out the board
-					red_coin->SetX(red_coin->GetX() + 88);//MOVE THE RED COIN -100 WHEN PRESS <--
-				if (number_of_coin % 2 != 0)//YELLOW COIN "odd number" and don't move out the board
-					yellow_coin->SetX(yellow_coin->GetX() + 88);//MOVE THE YELLOW COIN -100 WHEN PRESS <--
-
-				break;
+	
 			default:
 				break;
 			}

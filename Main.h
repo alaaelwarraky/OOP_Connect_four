@@ -10,6 +10,7 @@ public:
 	~CMain();
 	void GameLoop();
 	int drop(int col);
+	bool check(int a, int b);
 	struct cell
 	{
 		int in;

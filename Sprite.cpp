@@ -39,6 +39,7 @@ void CSprite::draw()
 	SDL_RenderCopy(renderer, image, &crop, &rect);
 }
 
+
 void CSprite::SetX(int X)
 {
 	rect.x = X;
@@ -65,12 +66,15 @@ int  CSprite::GetY()
 	return rect.y;
 }
 
-//void CSprite::GetRect(int &x,int &y,int &w,int &h)
-//{
-//	rect.x = x;
-//	rect.y = y;
-//	rect.w = w;
-//	rect.h = h;
-//}
+SDL_Rect CSprite::GetRect()
+{
+	return rect;
+}
+
+SDL_Texture* CSprite::Get_image() 
+{ 
+	return image;
+}
+
 
 

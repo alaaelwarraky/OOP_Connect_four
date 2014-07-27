@@ -9,8 +9,8 @@ public:
 	void SetX(int X);
 	void SetY(int Y);
 	void SetPosition(int X, int Y);
-
-	//void GetRect(int &x, int &y, int &w, int &h);
+	SDL_Rect GetRect();
+	SDL_Texture *Get_image();
 	int GetX();
 	int GetY();
 private:

@@ -10,6 +10,7 @@ public:
 	~CMain();
 	void GameLoop();
 	int drop(int col);
+	bool check(int a, int b);
 	struct cell
 	{
 		int in;
@@ -18,6 +19,7 @@ public:
 	cell place[6][7];
 	vector<SDL_Rect>Rect1, Rect2;
 	int number_of_coin = 0;
+	bool winner;
 private:
 	int ScreenWidth;
 	int ScreenHeight;

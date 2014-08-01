@@ -113,7 +113,10 @@ void CMain::GameLoop(void)
 			yellow_coin->draw();//draw the yellow coin if the number of coin is odd number
 		}
 
-	
+		if (number_of_coin == 42 && winner == false)
+			no_winner->draw();
+
+		csdl_setup->end();//upload the picture
 		 if (winner == true)//if one of the player win
 			{
 
@@ -122,9 +125,11 @@ void CMain::GameLoop(void)
 					red_win->draw();//draw the funny picture of player 2 when the number is odd
 				if (number_of_coin % 2 != 0)
 					yellow_win->draw();//draw the funny picture of player 2 when the number is odd
+				
 
 				csdl_setup->end();//upload the picture
-				if (number_of_coin % 2 == 0)
+				
+				 if (number_of_coin % 2 == 0)
 				{   //  use the keyboard 
 					switch (csdl_setup->GetMainEvent()->type)
 					{
@@ -137,6 +142,7 @@ void CMain::GameLoop(void)
 
 							Rect1.clear();//clear the vector of red coin to begain with empty board
 							Rect2.clear();//clear the vector of yellow coin to begain with empty board
+							number_of_coin = 0;
 							for (int i = 0; i < 6; i++)
 							for (int j = 0; j < 7; j++)
 							{
@@ -164,6 +170,7 @@ void CMain::GameLoop(void)
 							winner = false;// because replay all the game loop again
 							Rect1.clear();//clear the vector of red coin to begain with empty board
 							Rect2.clear();//clear the vector of yellow coin to begain with empty board
+							number_of_coin = 0;
 							for (int i = 0; i < 6; i++)
 							for (int j = 0; j < 7; j++)
 							{
@@ -176,9 +183,37 @@ void CMain::GameLoop(void)
 
 					}
 				}
+				 
 				continue;
 			}
-		
+		if (number_of_coin == 42 && winner == false)
+		{
+			switch (csdl_setup->GetMainEvent()->type)
+			{
+			case SDL_KEYDOWN:
+				switch (csdl_setup->GetMainEvent()->key.keysym.sym)
+				{
+				case SDLK_SPACE:// press space when you want to play again
+					//select the area of red coin again
+
+					Rect1.clear();//clear the vector of red coin to begain with empty board
+					Rect2.clear();//clear the vector of yellow coin to begain with empty board
+					for (int i = 0; i < 6; i++)
+					for (int j = 0; j < 7; j++)
+					{
+						place[i][j].in = 0;//clear the int array to begain with empty board
+						place[i][j].player = ' ';//clear the char array to begain with empty board
+					}
+					number_of_coin = 0;
+					board->draw();//draw the board
+				
+				
+				}
+			}
+			continue;
+		}
+
+
 			//moving with keyboard
 			switch (csdl_setup->GetMainEvent()->type)
 			{
@@ -225,6 +260,7 @@ void CMain::GameLoop(void)
 							if (winner == true)
 							{  //load the winner picture
 								red_win->draw();
+								
 								break;
 							}
 						}
@@ -271,31 +307,7 @@ void CMain::GameLoop(void)
 			default:
 				break;
 			}
-			if (number_of_coin == 42 && winner == false)
-			{
-
-				switch (csdl_setup->GetMainEvent()->type)
-				{
-				case SDL_KEYDOWN:
-					switch (csdl_setup->GetMainEvent()->key.keysym.sym)
-					{
-					case SDLK_SPACE:// press space when you want to play again
-						//select the area of red coin again
-
-						Rect1.clear();//clear the vector of red coin to begain with empty board
-						Rect2.clear();//clear the vector of yellow coin to begain with empty board
-						for (int i = 0; i < 6; i++)
-						for (int j = 0; j < 7; j++)
-						{
-							place[i][j].in = 0;//clear the int array to begain with empty board
-							place[i][j].player = ' ';//clear the char array to begain with empty board
-						}
-						number_of_coin = 0;
-						board->draw();//draw the board
-						red_coin->draw();
-					}
-				}
-			}
+			
 
 			csdl_setup->end();
 		}

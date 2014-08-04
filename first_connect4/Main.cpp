@@ -1,29 +1,38 @@
 #include "stdafx.h"
 #include "Main.h"
 #include "Sprite.h"
-
-
 CMain::CMain(int passed_ScreenWidth,int passed_ScreenHight)
-{   
+{
+	Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
 	winner = false;
 	number_of_coin = 0;
 	ScreenWidth = passed_ScreenWidth;
 	ScreenHeight = passed_ScreenHight;
 	quit = false;
 	csdl_setup = new CSDL_Setup(&quit,  ScreenWidth, ScreenHeight);
-	board = new CSprite(csdl_setup->GetRenderer(),"board.png",0,0,1073,571);
-	red_coin = new CSprite(csdl_setup->GetRenderer(), "player 1.png", 8, 10, 96, 86);
-	yellow_coin = new CSprite(csdl_setup->GetRenderer(), "player 2.png", 8, 10, 96, 86);
+	board = new CSprite(csdl_setup->GetRenderer(),"board.png",8,10,708,559);
+	red_coin = new CSprite(csdl_setup->GetRenderer(), "player 1.png", 8, 10, 99, 80);
+	yellow_coin = new CSprite(csdl_setup->GetRenderer(), "player 2.png", 8, 10, 99, 80);
 	red_win = new CSprite(csdl_setup->GetRenderer(), "player 1_win.png", 0, 0, 1073, 571);
 	yellow_win = new CSprite(csdl_setup->GetRenderer(), "player 2_win.png", 0, 0, 1073, 571);
 	no_winner = new CSprite(csdl_setup->GetRenderer(), "nowinner.png", 0, 0, 1073, 571);
+	intro_1 = new CSprite(csdl_setup->GetRenderer(), "intro 1.png", 0, 0, 1073, 571);
+	red_turn = new CSprite(csdl_setup->GetRenderer(), "red turn.png", 730, 100, 315, 348);
+	yellow_turn = new CSprite(csdl_setup->GetRenderer(), "yellow turn.png", 730, 100, 315, 348);
 
-	/*timeCheck = SDL_GetTicks();
-	MouseX = 0;
-	MouseY = 0;
-	follow = false;*/
+	//Initialize SDL_mixer
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+		printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+
+	// COLOR BACKGROUND
+	SDL_SetRenderDrawColor(csdl_setup->GetRenderer(), 82, 82, 220, 66);
+	 r = { 0, 0, 1073, 570 };
+	
+	 //Load sound effects
+	win = Mix_LoadWAV("CHEER2.wav");
+	SELECT = Mix_LoadWAV("SELECT.wav");
+	DROP = Mix_LoadWAV("low.wav");
 }
-
 
 CMain::~CMain()
 {   //memory leaks
@@ -34,8 +43,12 @@ CMain::~CMain()
 	delete red_win;
 	delete yellow_win;
 	delete no_winner;
+	delete intro_1;
+	Mix_FreeChunk(SELECT);
+	Mix_FreeChunk(DROP);
+	SELECT = NULL;
+	DROP = NULL;
 }
-
 
 bool CMain::check(int a, int b)
 {
@@ -86,15 +99,18 @@ int CMain::drop(int col)
 	return raw; //that will return the numper of row that i will drop the coin in it
 }
 
-
 void CMain::GameLoop(void)
 {
 	while (!quit && csdl_setup->GetMainEvent()->type != SDL_QUIT)
 	{
 		csdl_setup->begain();
-
+		SDL_RenderFillRect(csdl_setup->GetRenderer(), &r);
 		board->draw();
-		
+		if (number_of_coin % 2 == 0)
+			red_turn->draw();
+		if (number_of_coin % 2 != 0)
+			yellow_turn->draw();
+
 		for (int j = 0; j < Rect1.size(); j++)
 		{
 			SDL_RenderCopy(csdl_setup->GetRenderer(), red_coin->Get_image(), NULL, &Rect1[j]);//save red coin in the vector 1
@@ -117,75 +133,75 @@ void CMain::GameLoop(void)
 			no_winner->draw();
 
 		csdl_setup->end();//upload the picture
-		 if (winner == true)//if one of the player win
-			{
+		if (winner == true)//if one of the player win
+		{
 
-				//Update screen
-				if (number_of_coin % 2 == 0)
-					red_win->draw();//draw the funny picture of player 2 when the number is odd
-				if (number_of_coin % 2 != 0)
-					yellow_win->draw();//draw the funny picture of player 2 when the number is odd
-				
+			//Update screen
+			if (number_of_coin % 2 == 0)
+				red_win->draw();//draw the funny picture of player 2 when the number is odd
+			else if (number_of_coin % 2 != 0)
+				yellow_win->draw();//draw the funny picture of player 2 when the number is odd
 
-				csdl_setup->end();//upload the picture
-				
-				 if (number_of_coin % 2 == 0)
-				{   //  use the keyboard 
-					switch (csdl_setup->GetMainEvent()->type)
-					{
-					case SDL_KEYDOWN:
-						switch (csdl_setup->GetMainEvent()->key.keysym.sym)
-						{
-						case SDLK_SPACE:// press space when you want to play again
-							//select the area of red coin again
-							red_coin = new CSprite(csdl_setup->GetRenderer(), "player 1.png", 8, 10, 96, 86);
 
-							Rect1.clear();//clear the vector of red coin to begain with empty board
-							Rect2.clear();//clear the vector of yellow coin to begain with empty board
-							number_of_coin = 0;
-							for (int i = 0; i < 6; i++)
-							for (int j = 0; j < 7; j++)
-							{
-								place[i][j].in = 0;//clear the int array to begain with empty board
-								place[i][j].player = ' ';//clear the char array to begain with empty board
-							}
-							board->draw();//draw the board
-							winner = false;// because replay all the game loop again
-							break;
+			csdl_setup->end();//upload the picture
 
-						}
-					}
-				}
-
-				else if (number_of_coin % 2 != 0)
+			if (number_of_coin % 2 == 0)
+			{   //  use the keyboard 
+				switch (csdl_setup->GetMainEvent()->type)
 				{
-					switch (csdl_setup->GetMainEvent()->type)
+				case SDL_KEYDOWN:
+					switch (csdl_setup->GetMainEvent()->key.keysym.sym)
 					{
-					case SDL_KEYDOWN:
-						switch (csdl_setup->GetMainEvent()->key.keysym.sym)
-						{
-						case SDLK_SPACE:// press space when you want to play again
-							//select the area of red coin again
-							yellow_coin = new CSprite(csdl_setup->GetRenderer(), "player 2.png", 8, 10, 96, 86);
-							winner = false;// because replay all the game loop again
-							Rect1.clear();//clear the vector of red coin to begain with empty board
-							Rect2.clear();//clear the vector of yellow coin to begain with empty board
-							number_of_coin = 0;
-							for (int i = 0; i < 6; i++)
-							for (int j = 0; j < 7; j++)
-							{
-								place[i][j].in = 0;//clear the int array to begain with empty board
-								place[i][j].player = ' ';//clear the char array to begain with empty board
-							}
-							board->draw();//draw the board
+					case SDLK_SPACE:// press space when you want to play again
+						//select the area of red coin again
 
+						red_coin = new CSprite(csdl_setup->GetRenderer(), "player 1.png", 8, 10, 99, 80);
+						Rect1.clear();//clear the vector of red coin to begain with empty board
+						Rect2.clear();//clear the vector of yellow coin to begain with empty board
+						number_of_coin = 0;
+						for (int i = 0; i < 6; i++)
+						for (int j = 0; j < 7; j++)
+						{
+							place[i][j].in = 0;//clear the int array to begain with empty board
+							place[i][j].player = ' ';//clear the char array to begain with empty board
 						}
+						board->draw();//draw the board
+						winner = false;// because replay all the game loop again
+						break;
 
 					}
 				}
-				 
-				continue;
 			}
+
+			else if (number_of_coin % 2 != 0)
+			{
+				switch (csdl_setup->GetMainEvent()->type)
+				{
+				case SDL_KEYDOWN:
+					switch (csdl_setup->GetMainEvent()->key.keysym.sym)
+					{
+					case SDLK_SPACE:// press space when you want to play again
+						//select the area of red coin again
+						yellow_coin = new CSprite(csdl_setup->GetRenderer(), "player 2.png", 8, 10, 99, 80);
+						winner = false;// because replay all the game loop again
+						Rect1.clear();//clear the vector of red coin to begain with empty board
+						Rect2.clear();//clear the vector of yellow coin to begain with empty board
+						number_of_coin = 0;
+						for (int i = 0; i < 6; i++)
+						for (int j = 0; j < 7; j++)
+						{
+							place[i][j].in = 0;//clear the int array to begain with empty board
+							place[i][j].player = ' ';//clear the char array to begain with empty board
+						}
+						board->draw();//draw the board
+
+					}
+
+				}
+			}
+
+			continue;
+		}
 		if (number_of_coin == 42 && winner == false)
 		{
 			switch (csdl_setup->GetMainEvent()->type)
@@ -206,108 +222,116 @@ void CMain::GameLoop(void)
 					}
 					number_of_coin = 0;
 					board->draw();//draw the board
-				
-				
+
+
 				}
 			}
 			continue;
 		}
 
-
-			//moving with keyboard
-			switch (csdl_setup->GetMainEvent()->type)
+		
+		//moving with keyboard
+		switch (csdl_setup->GetMainEvent()->type)
+		{
+		case SDL_KEYDOWN:
+			switch (csdl_setup->GetMainEvent()->key.keysym.sym)
 			{
-			case SDL_KEYDOWN:
-				switch (csdl_setup->GetMainEvent()->key.keysym.sym)
-				{
-				case SDLK_a:
-					if (number_of_coin % 2 == 0)//RED COIN "even number" and don't move out the board
-						red_coin->SetX(red_coin->GetX() - 100);//MOVE THE RED COIN -100 WHEN PRESS <--
-					if (number_of_coin % 2 != 0)//YELLOW COIN "odd number" and don't move out the board
-						yellow_coin->SetX(yellow_coin->GetX() - 100);//MOVE THE YELLOW COIN -100 WHEN PRESS <--
+			case SDLK_a:
+				Mix_PlayChannel(-1, SELECT, 0);
+				if (number_of_coin % 2 == 0 && red_coin->GetX() > 8)//RED COIN "even number" and don't move out the board
+					red_coin->SetX(red_coin->GetX() - 100);//MOVE THE RED COIN -100 WHEN PRESS <--
+				if (number_of_coin % 2 != 0 && yellow_coin->GetX() > 8)//YELLOW COIN "odd number" and don't move out the board
+					yellow_coin->SetX(yellow_coin->GetX() - 100);//MOVE THE YELLOW COIN -100 WHEN PRESS <--
 
-					break;
-				case SDLK_d:
-					if (number_of_coin % 2 == 0)//RED COIN "even number" and don't move out the board
-						red_coin->SetX(red_coin->GetX() + 100);//MOVE THE RED COIN -100 WHEN PRESS <--
-					if (number_of_coin % 2 != 0)//YELLOW COIN "odd number" and don't move out the board
-						yellow_coin->SetX(yellow_coin->GetX() + 100);//MOVE THE YELLOW COIN -100 WHEN PRESS <--
-
-					break;
-				case SDLK_SPACE:
-					if (number_of_coin % 2 == 0 && winner == false)
-					{
-						if (red_coin->GetY() >= 10)
-						{
-							int COL = (red_coin->GetX() - 8) / 100;
-							int ROW = drop(COL);
-							if (ROW != 1)
-							{
-								place[ROW - 2][(red_coin->GetX() - 8) / 100].player = 'A';
-								red_coin->SetY(red_coin->GetY() + (66 * ROW));
-								red_coin->SetY(red_coin->GetY() - ((6 - ROW) * 13));
-								Rect1.push_back(red_coin->GetRect());//push the coin in the vector
-								//draw the yellow coin after the red coin drop
-								yellow_coin = new CSprite(csdl_setup->GetRenderer(), "player 2.png", 8, 10, 96, 86);
-								yellow_coin->draw();
-
-							}
-							else
-							{
-								break;//if drop in illegal place will break
-							}
-							winner = check(ROW - 2, COL);//check the winner
-							if (winner == true)
-							{  //load the winner picture
-								red_win->draw();
-								
-								break;
-							}
-						}
-
-					}
-					else if (number_of_coin % 2 != 0)
-					{
-						if (yellow_coin->GetY() >= 10)
-						{
-							int COL = (yellow_coin->GetX() - 8) / 100;
-							int ROW = drop(COL);
-							if (ROW != 1)
-							{
-								place[ROW - 2][(yellow_coin->GetX() - 8) / 100].player = 'B';
-								yellow_coin->SetY(yellow_coin->GetY() + (66 * ROW));
-								yellow_coin->SetY(yellow_coin->GetY() - ((6 - ROW) * 13));
-								Rect2.push_back(yellow_coin->GetRect());//push the coin in the vector
-								//draw the yellow coin after the red coin drop
-								red_coin = new CSprite(csdl_setup->GetRenderer(), "player 1.png", 8, 10, 96, 86);
-								red_coin->draw();
-
-							}
-							else
-							{
-								break;//if drop in illegal place will break
-							}
-							winner = check(ROW - 2, COL);//check the winner
-							if (winner == true)
-							{  //load the winner picture
-								yellow_win->draw();
-								break;
-							}
-
-						}
-					}
-					if (!winner)
-						number_of_coin++;
-					break;
-
-				default:
-					break;
-				}
 				break;
+			case SDLK_d:
+				Mix_PlayChannel(-1, SELECT, 0);
+				if (number_of_coin % 2 == 0 && red_coin->GetX() < 600)//RED COIN "even number" and don't move out the board
+					red_coin->SetX(red_coin->GetX() + 100);//MOVE THE RED COIN -100 WHEN PRESS <--
+				if (number_of_coin % 2 != 0 && yellow_coin->GetX() < 600)//YELLOW COIN "odd number" and don't move out the board
+					yellow_coin->SetX(yellow_coin->GetX() + 100);//MOVE THE YELLOW COIN -100 WHEN PRESS <--
+
+				break;
+			case SDLK_ESCAPE:
+				quit = true;
+				break; 
+			case SDLK_SPACE:
+				Mix_PlayChannel(-1, DROP, 0);
+				if (number_of_coin % 2 == 0 && winner == false)
+				{
+					if (red_coin->GetY() >= 10)
+					{
+						int COL = (red_coin->GetX() - 8) / 100;
+						int ROW = drop(COL);
+						if (ROW != 1)
+						{
+							place[ROW - 2][(red_coin->GetX() - 8) / 100].player = 'A';
+							red_coin->SetY(red_coin->GetY() + (66 * ROW));
+							red_coin->SetY(red_coin->GetY() - ((6 - ROW) * 13));
+							Rect1.push_back(red_coin->GetRect());//push the coin in the vector
+							//draw the yellow coin after the red coin drop
+							yellow_coin = new CSprite(csdl_setup->GetRenderer(), "player 2.png", yellow_coin->GetX(), 10, 99, 80);
+							yellow_coin->draw();
+
+						}
+						else
+						{
+							break;//if drop in illegal place will break
+						}
+						winner = check(ROW - 2, COL);//check the winner
+						if (winner == true)
+						{  //load the winner picture
+							red_win->draw();
+							Mix_PlayChannel(-1, win, 0);
+							break;
+						}
+					}
+
+				}
+				else if (number_of_coin % 2 != 0)
+				{
+					if (yellow_coin->GetY() >= 10)
+					{
+						int COL = (yellow_coin->GetX() - 8) / 100;
+						int ROW = drop(COL);
+						if (ROW != 1)
+						{
+							place[ROW - 2][(yellow_coin->GetX() - 8) / 100].player = 'B';
+							yellow_coin->SetY(yellow_coin->GetY() + (66 * ROW));
+							yellow_coin->SetY(yellow_coin->GetY() - ((6 - ROW) * 13));
+							Rect2.push_back(yellow_coin->GetRect());//push the coin in the vector
+							//draw the yellow coin after the red coin drop
+							red_coin = new CSprite(csdl_setup->GetRenderer(), "player 1.png", red_coin->GetX(), 10, 99, 80);
+							red_coin->draw();
+
+						}
+						else
+						{
+							break;//if drop in illegal place will break
+						}
+						winner = check(ROW - 2, COL);//check the winner
+						if (winner == true)
+						{  //load the winner picture
+							yellow_win->draw();
+
+							Mix_PlayChannel(-1, win, 0);
+							break;
+						}
+
+					}
+				}
+				if (!winner)
+					number_of_coin++;
+				break;
+
 			default:
 				break;
 			}
-			
+			break;
+		default:
+			break;
+		
+			}
 
 			csdl_setup->end();
 		}
